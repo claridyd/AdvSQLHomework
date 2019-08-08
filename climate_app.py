@@ -15,7 +15,7 @@ from flask import Flask, jsonify
 #####################
 # Database Setup
 #####################
-engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+engine = create_engine("sqlite:///Resources/hawaii.sqlite", connect_args={'check_same_thread': False})
 # Reflect an existing database into a new model
 Base = automap_base()
 # Reflect the tables
@@ -42,14 +42,15 @@ def home():
     return(
         f"Available Routes:<br/>"
         f" <br/>"
-        f"/api.v1.0/precipitation<br/>"
-        f"/api.v1.0/stations<br/>"
-        f"/api.v1.0/tobs<br/>"
+        f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/<start>"
+        f"/api/v1.0/<start>/<end>"
     )
 
 
-@app.route("/api.v1.0/precipitation")
+@app.route("/api/v1.0/precipitation")
 def precipitation():
     # query the date and precip
     results = session.query(Measurement.date, Measurement.prcp).\
@@ -68,7 +69,7 @@ def precipitation():
    
 
 
-@app.route("/api.v1.0/stations")
+@app.route("/api/v1.0/stations")
 def stations():
     # get list of stations
     results = session.query(Station.station).all()
@@ -77,7 +78,7 @@ def stations():
     return jsonify(all_stations)
 
 
-@app.route("/api.v1.0/tobs")
+@app.route("/api/v1.0/tobs")
 def tobs():
     results = session.query(Measurement.date, Measurement.tobs).\
         filter(Measurement.date > '2016-08-23').all()
@@ -87,7 +88,20 @@ def tobs():
 
 
 
-#@app.route("/api.v1.0/<start>")
+@app.route("/api/v1.0/<start_date>")
+@app.route("/api/v1.0/<start_date>/<end_date>")
+def calc_temps(start_date, end_date):
+    """TMIN, TAVG, TMAX for a list of dates"""
+    if not end_date:
+        results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs)).\
+            filter(Measurement.date>= start_date).all()
+        start_list = list(np.ravel(results))
+        return jsonify(start_list)
+
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
+    all_list = list(np.ravel(results))
+    return jsonify(all_list)
 
 if __name__ == '__main__':
     app.run(debug=True)
