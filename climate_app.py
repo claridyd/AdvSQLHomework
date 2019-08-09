@@ -45,7 +45,7 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start>"
+        f"/api/v1.0/<start><br/>"
         f"/api/v1.0/<start>/<end>"
     )
 
@@ -90,7 +90,7 @@ def tobs():
 
 @app.route("/api/v1.0/<start_date>")
 @app.route("/api/v1.0/<start_date>/<end_date>")
-def calc_temps(start_date, end_date):
+def calc_temps(start_date=None, end_date=None):
     """TMIN, TAVG, TMAX for a list of dates"""
     if not end_date:
         results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs)).\
